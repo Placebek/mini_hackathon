@@ -1,9 +1,9 @@
 from fastapi import FastAPI
+from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.router import route as burger_route
-
-from database.db import Base, async_engine
+from app.router import route
 
 app = FastAPI()
 
-app.include_router(burger_route)
+app.include_router(route)

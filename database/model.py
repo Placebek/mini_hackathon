@@ -2,8 +2,12 @@ from datetime import datetime
 
 from sqlalchemy import Column, Date, Integer, String, ForeignKey, TIMESTAMP, Float
 from sqlalchemy.orm import relationship
-
+from sqlalchemy.ext.declarative import declarative_base
 from database.db import Base 
+
+Base = declarative_base()
+metadata = Base.metadata
+
 
 class User(Base):
     __tablename__ = "users"
@@ -32,6 +36,7 @@ class BonusCard(Base):
     
     burger_id = Column(Integer, ForeignKey("burger.id", ondelete="CASCADE"))
     burger = relationship("Burger", back_populates="burgers")
+
 
 class MainCard(Base):
     __tablename__ = "main_cards"
