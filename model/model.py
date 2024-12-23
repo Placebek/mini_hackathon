@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Date, Integer, String, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, Date, Integer, String, ForeignKey, TIMESTAMP, Float
 from sqlalchemy.orm import relationship
 
 from database.db import Base 
@@ -10,25 +10,27 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
     phone_number = Column(String, nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.now)
 
-    bonus_card = relationship("BonusCard", back_populates="user", cascade="all, delete")
-    main_card = relationship("MainCard", back_populates="user", cascade="all, delete")
+    # bonus_card = relationship("BonusCard", back_populates="user", cascade="all, delete")
+    # main_card = relationship("MainCard", back_populates="user", cascade="all, delete")
 
 
 class BonusCard(Base):
-    __tablename__ = "bouns_cards"
+    __tablename__ = "bonus_cards"
 
     id = Column(Integer, primary_key=True, index=True)
     card_number = Column(String, nullable=False)
     money = Column(Integer)
-    percent = Column(Integer)
     replenishment_time = Column(Date)
     created_at = Column(TIMESTAMP, default=datetime.now)
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    user = relationship("User", back_populates="bouns_cards")
+    burger_id = Column(Integer, ForeignKey("burgers.id", ondelete="CASCADE"))
+
+    # burger = relationship("Burger", back_populates="burgers")
 
 class MainCard(Base):
     __tablename__ = "main_cards"
@@ -41,7 +43,17 @@ class MainCard(Base):
     created_at = Column(TIMESTAMP, default=datetime.now)
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    user = relationship("User", back_populates="main_cards")
+    # user = relationship("User", back_populates="main_cards")
 
     
-    
+class Burger(Base):
+    __tablename__ = "burgers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name_burger = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.now)
+    precent = Column(Float, nullable=False)
+
+    # bonus_id = Column(Integer, ForeignKey("bonus_cards.id", ondelete="CASCADE"))
+    # bonus = relationship("BonusCard", back_populates="bonus_cards")

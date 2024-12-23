@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
+from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.auth.command.command import get_user, hash_password, verify_password, create_access_token
+from app.api.auth.command.command import get_access_token, get_user, hash_password, validate_access_token, verify_password, create_access_token
 from app.api.auth.schema.create.create import UserCreate
 
+from app.api.auth.schema.response.response import TokenResponse, UserResponse
 from model.model import *
 from database.db import get_db
 
@@ -13,10 +15,10 @@ router = APIRouter()
 
 @router.post(
     "/login", 
-    response_model=Token
+    response_model=TokenResponse
 )
 async def login(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    db_user = await get_user(db, user.username)
+    db_user = await get_user(username=user.username, db=db)
 
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
@@ -36,29 +38,26 @@ async def register(
         raise HTTPException(status_code=400, detail="User already exists")
     
     hashed_password = hash_password(user.password)
-    new_user = User(username=user.username, hashed_password=hashed_password)
+    new_user = User(username=user.username, hashed_password=hashed_password, phone_number=user.phone_number)
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
     return {"message": "User registered successfully"}
 
+@router.get(
+    '/profile',
+    summary="get user profile data",
+    response_model=UserResponse
+)
+async def user_profile(access_token: str = Depends(get_access_token), db: AsyncSession = Depends(get_db)):
+    try:
+        username = await validate_access_token(access_token=access_token)
 
+        user = await get_user(username=username, db=db)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return user
 
-# @router.get("/examination")
-# async def protected_route(current_user: UserData = Depends(get_current_user)):
-#     return {"message": f"Привет, {current_user.username}! Это защищённый маршрут."}
-
-
-# @router.get("/examination")
-# async def protected_route(token: str, db: AsyncSession = Depends(get_db)):
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         username: str = payload.get("sub")
-#         if username is None:
-#             raise HTTPException(status_code=401, detail="Invalid token")
-#         user = await get_user(db, username)
-#         if not user:
-#             raise HTTPException(status_code=401, detail="User not found")
-#         return {"message": f"Hello, {username}!"}
-#     except JWTError:
-#         raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
