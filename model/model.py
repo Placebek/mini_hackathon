@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from database.db import Base 
 
-class Users(Base):
+class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -17,7 +17,6 @@ class Users(Base):
     main_card = relationship("MainCard", back_populates="user", cascade="all, delete")
 
 
-
 class BonusCard(Base):
     __tablename__ = "bouns_cards"
 
@@ -27,7 +26,6 @@ class BonusCard(Base):
     percent = Column(Integer)
     replenishment_time = Column(Date)
     created_at = Column(TIMESTAMP, default=datetime.now)
-
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     user = relationship("User", back_populates="bouns_cards")

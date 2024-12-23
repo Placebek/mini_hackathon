@@ -22,5 +22,7 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 
     TOKEN_SECRET_KEY: str
+    TOKEN_ALGORITHM: str = 'HS256'  # 算法
+    TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 1  
 
 settings = Settings()
