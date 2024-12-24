@@ -97,3 +97,19 @@ class CreateMainCardRequest(BaseModel):
         orm_mode = True
 
 
+class BasketResponse(BaseModel):
+    id: int
+    created_at: datetime
+
+    burger: List[BurgerResponse] 
+
+    class Config:
+        orm_mode = True
+
+
+class BasketRequest(BaseModel):
+    user_id: int
+    burger_id: int
+    
+    class Config:
+        prm_mode = True

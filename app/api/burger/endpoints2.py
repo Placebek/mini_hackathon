@@ -152,6 +152,49 @@ async def create_bonus_card(
     return new_card
 
 
+@routers.get(
+    '/users/{user_id}/baskets',
+    summary="Выводить все вещи в корзине",
+    response_model=List[BasketResponse],
+)
+async def get_basket_by_user_id(user_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Basket)
+        .filter(Basket.user_id == user_id)
+    )
+    baskets = result.scalars().all()
+
+    if not baskets:
+        raise HTTPException(status_code=404, detail="Baskets not found for this user")
+
+    return [BasketResponse.from_attributes(card) for card in baskets]
+
+
+@routers.post(
+    '/add/basckets/',
+    summary="Добавить в корзину",
+    response_model=List[BasketResponse]
+)
+async def add_basket(
+    add_request: BasketRequest,
+    db: AsyncSession = Depends(get_db)
+):  
+    burger_result = await db.execute(select(Burger).filter(Burger.id == add_request.user_id))
+    burger = burger_result.scalar_one_or_none()
+    if not burger:
+        raise HTTPException(status_code=404, detail="Burger not found")
+    
+    basket_result = await db.execute(select(Basket).filter(Basket.burger_id == add_request.burger_id))
+    basket = basket_result.scalar_one_or_none()
+    if not basket:
+        raise HTTPException(status_code=404, detail="Basket not found")
+    
+    db.add(basket)
+    await db.commit()
+
+    return basket
+
+    
 @routers.post(
     "/purchase_burger/",
     summary="Покупать бургер",
@@ -202,5 +245,3 @@ async def purchase_burger(
         bonus_card_balance=bonus_card.money,
         discount_applied=bonus_to_add
     )
-
-
