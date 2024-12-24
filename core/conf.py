@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 
     # Env Token
-    TOKEN_SECRET_KEY: str  # 密钥 secrets.token_urlsafe(32)
+    JWT_SECRET_KEY: str  # 密钥 secrets.token_urlsafe(32)
 
 
     # DB

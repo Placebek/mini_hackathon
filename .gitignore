@@ -2,10 +2,9 @@
 
 venv/
 env/
-
+alembic.ini
 __pycache__/
 
 /ex.py
 /ex1.py
 
-alembic.ini/

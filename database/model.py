@@ -1,12 +1,7 @@
 from datetime import datetime
-
 from sqlalchemy import Column, Date, Integer, String, ForeignKey, TIMESTAMP, Float
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-from database.db import Base 
-
-Base = declarative_base()
-metadata = Base.metadata
+from database.db import Base
 
 
 class User(Base):
@@ -14,11 +9,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False)
-    phone_number = Column(String, nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.now)
 
-    bonus_card = relationship("BonusCard", back_populates="user", cascade="all, delete")
-    main_card = relationship("MainCard", back_populates="user", cascade="all, delete")
+    bonus_cards = relationship("BonusCard", back_populates="user", cascade="all, delete")
+    main_cards = relationship("MainCard", back_populates="user", cascade="all, delete")
+    baskets = relationship("Basket", back_populates="user", cascade="all, delete")
 
 
 class BonusCard(Base):
@@ -30,12 +25,8 @@ class BonusCard(Base):
     replenishment_time = Column(Date)
     created_at = Column(TIMESTAMP, default=datetime.now)
 
-
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     user = relationship("User", back_populates="bonus_cards")
-    
-    burger_id = Column(Integer, ForeignKey("burger.id", ondelete="CASCADE"))
-    burger = relationship("Burger", back_populates="burgers")
 
 
 class MainCard(Base):
@@ -51,7 +42,7 @@ class MainCard(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     user = relationship("User", back_populates="main_cards")
 
-    
+
 class Burger(Base):
     __tablename__ = "burgers"
 
@@ -61,5 +52,18 @@ class Burger(Base):
     created_at = Column(TIMESTAMP, default=datetime.now)
     precent = Column(Float, nullable=False)
 
-    bonus_id = Column(Integer, ForeignKey("bonus.id", ondelete="CASCADE"))
-    bonus = relationship("BonusCard", back_populates="bonus_cards")
+    baskets = relationship("Basket", back_populates="burger", cascade="all, delete")
+
+
+class Basket(Base):
+    __tablename__ = "baskets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(TIMESTAMP, default=datetime.now)
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    user = relationship("User", back_populates="baskets")
+
+    burger_id = Column(Integer, ForeignKey("burgers.id", ondelete="CASCADE"))
+    burger = relationship("Burger", back_populates="baskets")
+
