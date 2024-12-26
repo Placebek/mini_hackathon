@@ -112,4 +112,13 @@ class BasketRequest(BaseModel):
     burger_id: int
     
     class Config:
-        prm_mode = True
+        orm_mode = True
+
+
+class BurgerRequest(BaseModel):
+    name_burger: str 
+    price: float 
+    precent: float 
+
+    class Config:
+        orm_mode = True

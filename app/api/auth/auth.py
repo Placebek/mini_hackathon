@@ -1,7 +1,6 @@
 import hmac 
 import hashlib
-from typing import Annotated
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from jose import jwt
@@ -21,9 +20,9 @@ USER_DATABASE = {}
 @auth_router.get('/telegram-callback')
 async def telegram_callback(
     request: Request,
-    user_id: Annotated[int, Query(alias='id')],
-    username: Annotated[str, Query(alias='username')],
-    query_hash: Annotated[str, Query(alias='hash')],
+    user_id: int,
+    username: str,
+    query_hash: str,
 ):
     params = request.query_params.items()
     data_check_string = '\n'.join(sorted(f'{x}={y}' for x,y in params if x not in ('hash')))
@@ -48,7 +47,7 @@ async def telegram_callback(
 
 @auth_router.get('/login')
 async def login(
-    username: Annotated[str, Query()],
+    username: str,
 ):
     user = next((user for user_id, user in USER_DATABASE.items() if user['username'] == username), None)
     if not user:

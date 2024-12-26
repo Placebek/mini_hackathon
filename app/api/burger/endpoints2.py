@@ -171,33 +171,32 @@ async def get_basket_by_user_id(user_id: int, db: AsyncSession = Depends(get_db)
 
 
 @routers.post(
-    '/add/basckets/',
+    '/add/baskets/',
     summary="Добавить в корзину",
     response_model=List[BasketResponse]
 )
 async def add_basket(
     add_request: BasketRequest,
     db: AsyncSession = Depends(get_db)
-):  
-    burger_result = await db.execute(select(Burger).filter(Burger.id == add_request.user_id))
+):
+    burger_result = await db.execute(select(Burger).filter(Burger.id == add_request.burger_id))
     burger = burger_result.scalar_one_or_none()
     if not burger:
         raise HTTPException(status_code=404, detail="Burger not found")
-    
-    basket_result = await db.execute(select(Basket).filter(Basket.burger_id == add_request.burger_id))
-    basket = basket_result.scalar_one_or_none()
-    if not basket:
-        raise HTTPException(status_code=404, detail="Basket not found")
-    
+
+    basket = Basket(user_id=add_request.user_id, burger_id=add_request.burger_id)
     db.add(basket)
     await db.commit()
 
-    return basket
+    result = await db.execute(select(Basket).filter(Basket.user_id == add_request.user_id))
+    baskets = result.scalars().all()
+
+    return [BasketResponse.from_attributes(card) for card in baskets]
 
     
 @routers.post(
     "/purchase_burger/",
-    summary="Покупать бургер",
+    summary="Покупка бургера",
     response_model=PurchaseBurgerResponse
 )
 async def purchase_burger(
@@ -221,10 +220,6 @@ async def purchase_burger(
     if not main_card or main_card.money < burger.price * purchase_request.quantity:
         raise HTTPException(status_code=400, detail="Insufficient funds on main card")
 
-    bonus_percentage = burger.precent  
-    total_burger_price = burger.price * purchase_request.quantity
-    bonus_to_add = total_burger_price * (bonus_percentage / 100)
-
     bonus_card_result = await db.execute(
         select(BonusCard).filter(BonusCard.user_id == purchase_request.user_id)
     )
@@ -232,16 +227,45 @@ async def purchase_burger(
     if not bonus_card:
         raise HTTPException(status_code=404, detail="Bonus card not found")
 
+    total_burger_price = burger.price * purchase_request.quantity
+    bonus_to_add = total_burger_price * (burger.precent / 100)
+
     main_card.money -= total_burger_price
     bonus_card.money += bonus_to_add
-
     bonus_card.replenishment_time = datetime.now().date()
 
-    db.add(main_card)
-    db.add(bonus_card)
-   
+    await db.commit()
+
     return PurchaseBurgerResponse(
         main_card_balance=main_card.money,
         bonus_card_balance=bonus_card.money,
         discount_applied=bonus_to_add
     )
+
+
+@routers.post(
+    '/add/burger/',
+    summary='Добавить бургер',
+    response_model=BurgerResponse
+)
+async def create_burger(
+    burger_request: BurgerRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    existing_burger = await db.execute(
+        select(Burger).filter(Burger.name_burger == burger_request.name_burger)
+    )
+    if existing_burger.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Burger with this name already exists")
+
+    new_burger = Burger(
+        name_burger=burger_request.name_burger,
+        price=burger_request.price,
+        precent=burger_request.precent
+    )
+
+    db.add(new_burger)
+    await db.commit()
+    await db.refresh(new_burger)
+
+    return BurgerResponse.from_attributes(new_burger)
